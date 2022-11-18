@@ -45,7 +45,10 @@ int iniciarUsuarios(Usuario *usuarios, char *nom_archivo);
 void printUsers();
 
 // Atiende una solicitud de conexion
-void atenderConexion(Usuario *usuarios, Mensaje sol);
+void atenderConexion(Mensaje sol);
+void atenderDesconexion(Mensaje mensaje);
+void atenderFollow(Mensaje mensaje);
+void atenderUnfollow(Mensaje mensaje); 
 
 
 int main(int argc, char **argv) { 
@@ -85,11 +88,19 @@ int main(int argc, char **argv) {
     //Lectura del pipe con el que los procesos cliente mandan solicitudes al gestor
     if (read(pipe_gestor, &mensaje, sizeof(Mensaje)) > 0) {
       switch(mensaje.id){
-        case CONEXION: //Solicitud de conexion de un cliente
-          atenderConexion(usuarios, mensaje);
+        
+        case CONEXION: //Solicitud de conexion/desconexion de un cliente
+          if(mensaje.solicitud.sol_conexion.solicitud == CONNECT)
+            atenderConexion(mensaje);
+          else
+            atenderDesconexion(mensaje);
           break;
 
-        
+        case SEGUIR:
+          if(mensaje.solicitud.sol_follow.solicitud == FOLLOW)
+            atenderFollow(mensaje);
+          else
+            atenderUnfollow(mensaje);
       }
     }
   }
@@ -135,7 +146,6 @@ void validarArgumentos(int argc, char **argv, char *nom_archivo, char *nom_pipe,
     }
   }
 }
-
 int iniciarUsuarios(Usuario *usuarios, char *nom_archivo) {
   char buffer[20];
   int sigue;
@@ -172,7 +182,6 @@ int iniciarUsuarios(Usuario *usuarios, char *nom_archivo) {
   fclose(fp);
   return 1;
 }
-
 void printUsers() {
   printf(" -----------------------\n");
   for (int i = 0; i < Num; i++) {
@@ -186,8 +195,7 @@ void printUsers() {
     printf("\n -----------------------\n");
   }
 }
-
-void atenderConexion(Usuario *usuarios, Mensaje mensaje) {
+void atenderConexion(Mensaje mensaje) {
   char nom_pipe_cliente[TAMNOMPIPE];
   Solicitud_conexion sol = mensaje.solicitud.sol_conexion;
   int id_cliente = sol.id_usuario - 1;
@@ -222,4 +230,25 @@ void atenderConexion(Usuario *usuarios, Mensaje mensaje) {
   }
   printf("\t...Respuesta enviada!\n");
   printf("------------------------------------------------\n\n");
+}
+void atenderDesconexion(Mensaje mensaje) {
+  Solicitud_conexion sol = mensaje.solicitud.sol_conexion;
+  int id_cliente = sol.id_usuario - 1;
+
+  printf("------------------------------------------------\n");
+  printf("Usuario %d solicitando desconexion...\n", sol.id_usuario);
+  if (usuarios[id_cliente].online == 1) { // Si el usuario ya esta conectado
+    usuarios[id_cliente].online = 0;
+    close(usuarios[id_cliente].fd);
+    printf("...El usuario %d se ha desconectado!\n", sol.id_usuario);
+  } else {
+    printf("...El usuario %d no estaba conectado!\n", sol.id_usuario);
+  }
+  printf("------------------------------------------------\n\n");
+}
+void atenderFollow(Mensaje mensaje){
+  
+}
+void atenderUnfollow(Mensaje mensaje){
+  
 }
