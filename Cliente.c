@@ -77,7 +77,6 @@ int main(int argc, char **argv) {
   } else {
     printf("Usuario registrado\n");
   };
-
   
   printf("Menu\n");
   
