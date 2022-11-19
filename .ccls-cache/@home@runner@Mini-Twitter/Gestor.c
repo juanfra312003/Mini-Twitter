@@ -21,6 +21,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 mode_t fifo_mode = S_IRUSR | S_IWUSR;
@@ -31,6 +32,7 @@ int Num = 0; // Numero de usuarios de la platarforma
 int acoplado; // 1: Acoplado, 0: Desacoplado
 
 // Informacion a imprimir cada t tiempo
+int tiempo;
 int conectados = 0;
 int tweets_enviados = 0;
 int tweets_recibidos = 0;
@@ -44,6 +46,18 @@ int iniciarUsuarios(Usuario *usuarios, char *nom_archivo);
 // Imprime los usuarios en su estado actual (conexion, id, seguidores, etc)
 void printUsers();
 
+void signalHandler(){
+  printf("\n----------------------------\n");
+  printf("      Estadisticas     \n");
+  printf("----------------------------\n");
+  printf("Usuarios conectados: %d\n", conectados);
+  printf("Tweets enviados: %d\n", tweets_enviados);
+  printf("Tweets recidos: %d\n", tweets_recibidos);
+  printf("----------------------------\n\n");
+  signal(SIGALRM, signalHandler);
+  alarm(tiempo);
+}
+
 // Atiende una solicitud de conexion
 void atenderConexion(Mensaje sol);
 void atenderDesconexion(Mensaje mensaje);
@@ -54,7 +68,7 @@ void atenderUnfollow(Mensaje mensaje);
 int main(int argc, char **argv) { 
   Mensaje mensaje;
   char nom_archivo[TAMNOMPIPE], nom_pipe[TAMNOMPIPE];
-  int tiempo, pipe_gestor;
+  int pipe_gestor;
   
   // Validacion de los argumentos
   validarArgumentos(argc, argv, nom_archivo, nom_pipe, &tiempo);
@@ -81,6 +95,11 @@ int main(int argc, char **argv) {
     perror("pipe");
     exit(0);
   };
+
+  //Alarma para imprimir estadisticas del gestor
+  printf("Se imprimen estadisticas\n");
+  signal(SIGALRM, signalHandler);
+  alarm(tiempo);
   
   // Lectura del pipe
   printf("Empezando lectura del pipe...\n\n");
@@ -280,5 +299,36 @@ void atenderFollow(Mensaje mensaje){
   printf("------------------------------------------------\n\n");
 }
 void atenderUnfollow(Mensaje mensaje){
+  Solicitud_follow sol = mensaje.solicitud.sol_follow;
+  int id_solicitante = sol.id_sol, id_seguido = sol.id_seg - 1;
+  int indice_seguidor = -1, aux;
+
+  printf("------------------------------------------------\n");
+  printf("Usuario %d solicitando dejar de seguir a %d...\n", id_solicitante, id_seguido+1);
   
+  for(int i = 0 ; i < usuarios[id_seguido].num_seguidores ; i++){
+    if(usuarios[id_seguido].id_seguidores[i] == id_solicitante) indice_seguidor = i;
+  }
+  if(indice_seguidor == -1){
+    sol.success = 0;
+    printf("...El usuario %d no sigue a %d!\n\n", id_solicitante, id_seguido+1);
+  }
+  else{
+    sol.success = 1;
+    //
+    for(int i = indice_seguidor; i < usuarios[id_seguido].num_seguidores-1; i++){
+      usuarios[id_seguido].id_seguidores[i] = usuarios[id_seguido].id_seguidores[i+1];
+    }
+    usuarios[id_seguido].num_seguidores--;
+    printf("...El usuario %d ha dejado de seguir a %d!\n\n", id_solicitante, id_seguido+1);
+  }
+  mensaje.solicitud.sol_follow = sol;
+
+  printf("\tEnviando respuesta al cliente...\n");
+  if(write(usuarios[id_solicitante-1].fd, &mensaje, sizeof(Mensaje)) == -1){
+    printf("...No se pudo enviar la respuesta al cliente!\n");
+    return;
+  }
+  printf("\t...Respuesta enviada!\n");
+  printf("------------------------------------------------\n\n");
 }

@@ -157,10 +157,17 @@ void *leerRespuestas(){
           else{
             printf("No puedes seguir a %d porque ya lo sigues o no existe\n", mensaje.solicitud.sol_follow.id_seg);
           }
-          printf("------------------------------------------------\n");
+          printf("------------------------------------------------\n\t>");
         }
         else{
-          
+          printf("\n------------------------------------------------\n");
+          if(mensaje.solicitud.sol_follow.success){
+            printf("Has dejado de seguir a %d\n", mensaje.solicitud.sol_follow.id_seg);
+          }
+          else{
+            printf("No puedes dejar de seguir a %d porque no lo sigues o no existe\n", mensaje.solicitud.sol_follow.id_seg);
+          }
+          printf("------------------------------------------------\n\t>");
         }
         break;
 
@@ -191,13 +198,13 @@ void validarArgumentos(int argc, char **argv) {
     }
   }
 }
+
 Mensaje leerMensaje(){
   Mensaje mensaje_recibido;
   int cuantos;
   
   //Lectura del pipe
   if ((cuantos = read(pipe_cliente, &mensaje_recibido, sizeof(Mensaje))) <= 0) {
-    //perror("Lectura pipe cliente");
     exit(0);
   }
 
