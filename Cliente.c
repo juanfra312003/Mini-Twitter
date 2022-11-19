@@ -104,15 +104,26 @@ void *menu(){
     printf("\t[5] Desconectar\n");
     printf("------------------------------------------------\n\t> ");
     if(scanf("%d", &opcion) <= 0) exit(0);
-    printf("\n\t");
+    printf("\n");
     
     switch(opcion){
       case 1:
-        printf("------------------------------------------------\n\tIngrese el ID del usuario a seguir:\n");
+        printf("------------------------------------------------\n");
+        printf("\tIngrese el ID del usuario a seguir: ");
         if(scanf("%d", &id_objetivo) <= 0) exit(0);
-        enviarSolicitudFollow(FOLLOW, id_objetivo);
+        printf("------------------------------------------------\n\n");
+        if(id_objetivo == u_id)
+          printf("No te puedes seguir a ti mismo\n\n");
+        else enviarSolicitudFollow(FOLLOW, id_objetivo);
         break;
       case 2:
+        printf("------------------------------------------------\n");
+        printf("\tIngrese el ID del usuario a dejar de seguir: ");
+        if(scanf("%d", &id_objetivo) <= 0) exit(0);
+        printf("------------------------------------------------\n\n");
+        if(id_objetivo == u_id)
+          printf("No te puedes dejar de seguir a ti mismo\n\n");
+        else enviarSolicitudFollow(UNFOLLOW, id_objetivo);
         break;
       case 3:
         break;
@@ -135,6 +146,27 @@ void *leerRespuestas(){
   Mensaje mensaje;
   while(1){
     mensaje = leerMensaje();
+    switch(mensaje.id){
+      
+      case SEGUIR:
+        if(mensaje.solicitud.sol_follow.solicitud == FOLLOW){
+          printf("\n------------------------------------------------\n");
+          if(mensaje.solicitud.sol_follow.success){
+            printf("Has empezado a seguir a %d\n", mensaje.solicitud.sol_follow.id_seg);
+          }
+          else{
+            printf("No puedes seguir a %d porque ya lo sigues o no existe\n", mensaje.solicitud.sol_follow.id_seg);
+          }
+          printf("------------------------------------------------\n");
+        }
+        else{
+          
+        }
+        break;
+
+      default:
+        break;
+    }
   }
 }
 

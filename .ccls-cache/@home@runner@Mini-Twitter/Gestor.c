@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
             atenderDesconexion(mensaje);
           break;
 
-        case SEGUIR:
+        case SEGUIR: //Solicitud de follow/unfollow de un cliente
           if(mensaje.solicitud.sol_follow.solicitud == FOLLOW)
             atenderFollow(mensaje);
           else
@@ -219,6 +219,7 @@ void atenderConexion(Mensaje mensaje) {
     usuarios[id_cliente].fd = fdCliente;
     strcpy(usuarios[id_cliente].pipe, sol.nom_pipe);
     sol.success = 1;
+    conectados++;
     printf("...El usuario %d se ha conectado!\n\n", sol.id_usuario);
   }
   mensaje.solicitud.sol_conexion = sol; // Arma el mensaje de respuesta para el cliente  
@@ -241,13 +242,42 @@ void atenderDesconexion(Mensaje mensaje) {
     usuarios[id_cliente].online = 0;
     close(usuarios[id_cliente].fd);
     printf("...El usuario %d se ha desconectado!\n", sol.id_usuario);
+    conectados--;
   } else {
     printf("...El usuario %d no estaba conectado!\n", sol.id_usuario);
   }
   printf("------------------------------------------------\n\n");
 }
 void atenderFollow(Mensaje mensaje){
+  Solicitud_follow sol = mensaje.solicitud.sol_follow;
+  int id_solicitante = sol.id_sol, id_seguido = sol.id_seg - 1;
+  int ya_sigue = 0;
+
+  printf("------------------------------------------------\n");
+  printf("Usuario %d solicitando seguir a %d...\n", id_solicitante, id_seguido+1);
   
+  for(int i = 0 ; i < usuarios[id_seguido].num_seguidores ; i++){
+    if(usuarios[id_seguido].id_seguidores[i] == id_solicitante) ya_sigue = 1;
+  }
+  if(ya_sigue){
+    sol.success = 0;
+    printf("...El usuario %d ya sigue a %d!\n\n", id_solicitante, id_seguido+1);
+  }
+  else{
+    sol.success = 1;
+    usuarios[id_seguido].id_seguidores[usuarios[id_seguido].num_seguidores] = id_solicitante;
+    usuarios[id_seguido].num_seguidores++;
+    printf("...El usuario %d ha empezado a seguir a %d!\n\n", id_solicitante, id_seguido+1);
+  }
+  mensaje.solicitud.sol_follow = sol;
+
+  printf("\tEnviando respuesta al cliente...\n");
+  if(write(usuarios[id_solicitante-1].fd, &mensaje, sizeof(Mensaje)) == -1){
+    printf("...No se pudo enviar la respuesta al cliente!\n");
+    return;
+  }
+  printf("\t...Respuesta enviada!\n");
+  printf("------------------------------------------------\n\n");
 }
 void atenderUnfollow(Mensaje mensaje){
   

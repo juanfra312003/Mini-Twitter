@@ -1,15 +1,13 @@
-all: main
+all: Gestor Cliente
 
-CC = clang
-override CFLAGS += -g -Wno-everything -pthread -lm
+Gestor: Gestor.o solicitud.h Usuario.h
+	gcc -o Gestor Gestor.c
 
-SRCS = $(shell find . -name '.ccls-cache' -type d -prune -o -type f -name '*.c' -print)
+Gestor.o: Gestor.c solicitud.h Usuario.h
+	gcc -c Gestor.c
 
-main: $(SRCS)
-	$(CC) $(CFLAGS) $(SRCS) -o "$@"
+Cliente: Cliente.o solicitud.h Usuario.h
+	gcc -o Cliente Cliente.c -pthread
 
-main-debug: $(SRCS)
-	$(CC) $(CFLAGS) -O0 $(SRCS) -o "$@"
-
-clean:
-	rm -f main main-debug
+Cliente.o: Cliente.c solicitud.h Usuario.h
+	gcc -c Cliente.c
