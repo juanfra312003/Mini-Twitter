@@ -11,12 +11,8 @@ typedef struct Usuario{
   int p_id;
   //Informacion de tweets recibidos
   int ultimo_leido;
-  int leidos;
+  int recibidos;
   Tweet tweets_recibidos[MAXTWEETS];
-  //Informacion de tweets enviados
-  int ultimo_enviado;
-  int enviados;
-  Tweet tweets_enviados[MAXTWEETS];
   //Informacion de seguidores
   int num_seguidores;
   int id_seguidores[MAXUSRS];

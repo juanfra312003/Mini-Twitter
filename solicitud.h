@@ -21,12 +21,11 @@
 #define FOLLOW 1
 #define UNFOLLOW 0
 
-//ID de la estructura referente a una solicitud de un Tweet
-#define SOLTWEET 2
-
 //ID de la estructura referente a un tweet
-#define TWEET 3
+#define TWEET 2
 
+//ID de la estructura referente a una solicitud de un Tweet
+#define SOLTWEET 3
 
 // ID: 0 : Solicitud de conexion/desconexion
 typedef struct Solicitud_conexion{ 
@@ -56,7 +55,7 @@ typedef union Solicitud{
   Solicitud_conexion sol_conexion; // 0
   Solicitud_follow sol_follow; // 1
   Tweet tweet; // 2
-  int solicitud_Tweets; // 3
+  int id_solicitud_Tweets; // 3
 } Solicitud;
 
 //Mensaje: Unidad que sera enviada entre cliente y gestor

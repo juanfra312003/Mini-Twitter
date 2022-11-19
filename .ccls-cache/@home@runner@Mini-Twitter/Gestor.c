@@ -1,6 +1,6 @@
 /* 
   PROCESO GESTOR
-    ./gestor
+    ./Gestor
     -Parámetros:
       1: número de usuarios máximo
       2: relaciones en archivo de texto
@@ -63,7 +63,9 @@ void atenderConexion(Mensaje sol);
 void atenderDesconexion(Mensaje mensaje);
 void atenderFollow(Mensaje mensaje);
 void atenderUnfollow(Mensaje mensaje); 
-
+void atenderTweet(Mensaje mensaje); 
+void enviarTweetsPendientes(int id_destino);
+void atenderSolicitudTweet(Mensaje mensaje);
 
 int main(int argc, char **argv) { 
   Mensaje mensaje;
@@ -88,6 +90,11 @@ int main(int argc, char **argv) {
     perror("Gestor mkfifo");
     exit(1);
   }
+
+  //Alarma para imprimir estadisticas del gestor
+  signal(SIGALRM, signalHandler);
+  alarm(tiempo);
+  
   printf("\nAtendiendo solicitudes...\n\n");
 
   // Apertura del pipe
@@ -95,11 +102,6 @@ int main(int argc, char **argv) {
     perror("pipe");
     exit(0);
   };
-
-  //Alarma para imprimir estadisticas del gestor
-  printf("Se imprimen estadisticas\n");
-  signal(SIGALRM, signalHandler);
-  alarm(tiempo);
   
   // Lectura del pipe
   printf("Empezando lectura del pipe...\n\n");
@@ -120,6 +122,14 @@ int main(int argc, char **argv) {
             atenderFollow(mensaje);
           else
             atenderUnfollow(mensaje);
+          break;
+
+        case TWEET:
+          atenderTweet(mensaje);
+          break;
+
+        case SOLTWEET:
+          atenderSolicitudTweet(mensaje);
       }
     }
   }
@@ -175,9 +185,7 @@ int iniciarUsuarios(Usuario *usuarios, char *nom_archivo) {
     usuarios[i].online = 0;
     usuarios[i].id = i + 1;
     usuarios[i].ultimo_leido = 0;
-    usuarios[i].leidos = 0;
-    usuarios[i].ultimo_enviado = 0;
-    usuarios[i].enviados = 0;
+    usuarios[i].recibidos = 0;
     usuarios[i].num_seguidores = 0;
   }
   // Apertura del archivo
@@ -250,6 +258,9 @@ void atenderConexion(Mensaje mensaje) {
   }
   printf("\t...Respuesta enviada!\n");
   printf("------------------------------------------------\n\n");
+
+  if (usuarios[id_cliente].online && acoplado)
+    enviarTweetsPendientes(id_cliente);
 }
 void atenderDesconexion(Mensaje mensaje) {
   Solicitud_conexion sol = mensaje.solicitud.sol_conexion;
@@ -331,4 +342,40 @@ void atenderUnfollow(Mensaje mensaje){
   }
   printf("\t...Respuesta enviada!\n");
   printf("------------------------------------------------\n\n");
+}
+void atenderTweet(Mensaje mensaje){
+  Tweet tweet = mensaje.solicitud.tweet;
+  int id_remitente = tweet.id_origen-1, id_destino;
+
+  printf("------------------------------------------------\n");
+  printf("Tweet recibido...\n");
+  printf("\tMensaje: %s\n", tweet.mensaje);
+  printf("------------------------------------------------\n\n");
+  for(int i = 0 ; i < usuarios[id_remitente].num_seguidores ; i++){
+    id_destino = usuarios[id_remitente].id_seguidores[i] - 1;
+    usuarios[id_destino].tweets_recibidos[usuarios[id_destino].recibidos] = tweet;
+    usuarios[id_destino].recibidos++;
+    if(acoplado && usuarios[id_destino].online) enviarTweetsPendientes(id_destino);
+  }
+  tweets_recibidos++;
+  
+}
+void enviarTweetsPendientes(int id_destino){
+  Mensaje mensaje;
+  mensaje.id = TWEET;
+  printf("------------------------------------------------\n");
+  printf("Enviando Tweets pendientes a %d... \n", id_destino+1);
+  for(; usuarios[id_destino].ultimo_leido  < usuarios[id_destino].recibidos ; usuarios[id_destino].ultimo_leido++){
+    mensaje.solicitud.tweet = usuarios[id_destino].tweets_recibidos[usuarios[id_destino].ultimo_leido];
+    if(write(usuarios[id_destino].fd, &mensaje, sizeof(Mensaje)) == -1){
+      printf("...No se pudo enviar la tweet al cliente!\n");
+    return;
+  }
+    tweets_enviados++;
+  }
+  printf("...Tweets enviados! \n");
+  printf("------------------------------------------------\n\n");
+}
+void atenderSolicitudTweet(Mensaje mensaje){
+  enviarTweetsPendientes(mensaje.solicitud.id_solicitud_Tweets-1);
 }

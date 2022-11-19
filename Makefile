@@ -1,4 +1,4 @@
-all: Gestor Cliente
+all: Gestor Cliente clean
 
 Gestor: Gestor.o solicitud.h Usuario.h
 	gcc -o Gestor Gestor.c
@@ -11,3 +11,7 @@ Cliente: Cliente.o solicitud.h Usuario.h
 
 Cliente.o: Cliente.c solicitud.h Usuario.h
 	gcc -c Cliente.c
+
+clean:
+	rm *.o
+	rm pipe*

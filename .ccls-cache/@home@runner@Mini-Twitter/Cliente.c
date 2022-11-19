@@ -1,3 +1,14 @@
+/* 
+  PROCESO CLIENTE
+    ./Cliente
+    -Parámetros:
+      1: pipe nominal para comunicacion con el gestor
+      2: id del usuario que se conecta
+    
+    -Ejemplo para ejecucion
+      ./Cliente -p pipeGestor -i 1
+*/
+
 #include "solicitud.h"
 #include <fcntl.h>
 #include <signal.h>
@@ -9,7 +20,6 @@
 #include <unistd.h>
 #include <pthread.h>
 
-// Cliente:
 int u_id, fd;
 char nom_pipe[TAMNOMPIPE];
 char nom_pipe_gestor[TAMNOMPIPE];
@@ -25,7 +35,8 @@ void *leerRespuestas();
 //Funciones para cumplir requisitos del programa
 void enviarSolicitudConexion(int conexion); //Envia una solicitud de conexion/desconexion al gestor
 void enviarSolicitudFollow(int follow, int id); //Envia una solicitud de follow/unfollow al gestor
-
+void enviarTweet(char * txt); //Envia un tweet al gestor
+void enviarSolTweets(); //Envia una solicitud para recibir los tweets en modo desacoplado
 
 //Funciones complementarias
 void validarArgumentos(int argc, char **argv);
@@ -93,10 +104,13 @@ int main(int argc, char **argv) {
 
 void *menu(){
   int opcion, id_objetivo;
+  char * tweet;
+  size_t tam = TAMMSJ;
+  
   while(1){
     printf("------------------------------------------------\n");
     printf("            BIENVENIDO A MINI-TWITTER           \n");
-    printf("------------------------------------------------\n\n");
+    printf("------------------------------------------------\n");
     printf("\t[1] Follow\n");
     printf("\t[2] UnFollow\n");
     printf("\t[3] Tweet\n");
@@ -126,8 +140,18 @@ void *menu(){
         else enviarSolicitudFollow(UNFOLLOW, id_objetivo);
         break;
       case 3:
+        printf("------------------------------------------------\n");
+        printf("Tweet:\n\t");
+        getchar();
+        if(getline(&tweet, &tam, stdin) <= 0) exit(0);
+        enviarTweet(tweet);
+        printf("------------------------------------------------\n\n");
         break;
       case 4:
+        printf("------------------------------------------------\n");
+        printf("...Solicitud para recibir tweets pendientes enviada!\n");
+        printf("------------------------------------------------\n\n");
+        enviarSolTweets();
         break;
       case 5:
         printf("Gracias por usar Mini-Twitter!\n\t\tSaliendo...\n");
@@ -148,7 +172,7 @@ void *leerRespuestas(){
     mensaje = leerMensaje();
     switch(mensaje.id){
       
-      case SEGUIR:
+      case SEGUIR: //En caso de follow/unfollow
         if(mensaje.solicitud.sol_follow.solicitud == FOLLOW){
           printf("\n------------------------------------------------\n");
           if(mensaje.solicitud.sol_follow.success){
@@ -171,6 +195,13 @@ void *leerRespuestas(){
         }
         break;
 
+      case TWEET:
+        printf("\n------------------------------------------------\n");
+        printf("Nuevo Tweet de %d!\n", mensaje.solicitud.tweet.id_origen);
+        printf("\t%s", mensaje.solicitud.tweet.mensaje);
+        printf("------------------------------------------------\n\t>");
+        break;
+      
       default:
         break;
     }
@@ -237,6 +268,33 @@ void enviarSolicitudFollow(int follow, int id){
   sol.id_seg = id;
   mensaje.id = SEGUIR;
   mensaje.solicitud.sol_follow = sol;
+  
+  if (write(pipe_gestor, &mensaje, sizeof(Mensaje)) == -1) {
+    perror("Escribir pipe gestor");
+    exit(1);
+  }
+}
+void enviarTweet(char * txt){
+  Mensaje mensaje;
+  Tweet tweet;
+  tweet.id_origen = u_id;
+  strcpy(tweet.mensaje, txt);
+  mensaje.id = TWEET;
+  mensaje.solicitud.tweet = tweet;
+
+
+  if (write(pipe_gestor, &mensaje, sizeof(Mensaje)) == -1) {
+    perror("Escribir pipe gestor");
+    exit(1);
+  }
+
+  printf("...Tweet enviado!\n");
+}
+
+void enviarSolTweets(){
+  Mensaje mensaje;
+  mensaje.id = SOLTWEET;
+  mensaje.solicitud.id_solicitud_Tweets = u_id;
   
   if (write(pipe_gestor, &mensaje, sizeof(Mensaje)) == -1) {
     perror("Escribir pipe gestor");
