@@ -10,6 +10,7 @@
 */
 
 #include "solicitud.h"
+#include "colors.h"
 #include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
@@ -108,9 +109,9 @@ void *menu(){
   size_t tam = TAMMSJ;
   
   while(1){
-    printf("------------------------------------------------\n");
+    printf(CYAN_T"------------------------------------------------\n");
     printf("            BIENVENIDO A MINI-TWITTER           \n");
-    printf("------------------------------------------------\n");
+    printf("------------------------------------------------\n"RESET_COLOR);
     printf("\t[1] Follow\n");
     printf("\t[2] UnFollow\n");
     printf("\t[3] Tweet\n");
@@ -165,7 +166,6 @@ void *menu(){
     }
   }
 }
-
 void *leerRespuestas(){
   Mensaje mensaje;
   while(1){
@@ -207,7 +207,6 @@ void *leerRespuestas(){
     }
   }
 }
-
 void validarArgumentos(int argc, char **argv) {
   if (argc != 5) {
     printf("USAGE: Cliente -i ID -p pipeNom\n");
@@ -229,7 +228,6 @@ void validarArgumentos(int argc, char **argv) {
     }
   }
 }
-
 Mensaje leerMensaje(){
   Mensaje mensaje_recibido;
   int cuantos;
@@ -282,7 +280,6 @@ void enviarTweet(char * txt){
   mensaje.id = TWEET;
   mensaje.solicitud.tweet = tweet;
 
-
   if (write(pipe_gestor, &mensaje, sizeof(Mensaje)) == -1) {
     perror("Escribir pipe gestor");
     exit(1);
@@ -290,7 +287,6 @@ void enviarTweet(char * txt){
 
   printf("...Tweet enviado!\n");
 }
-
 void enviarSolTweets(){
   Mensaje mensaje;
   mensaje.id = SOLTWEET;

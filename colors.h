@@ -1,0 +1,10 @@
+//// Declaración de colores de fondo y texto/////////////////////////////////////////
+#define RESET_COLOR "\x1b[0m"
+#define NEGRO_T "\x1b[30m"
+#define ROJO_T "\x1b[31m"
+#define VERDE_T "\x1b[32m"
+#define AMARILLO_T "\x1b[33m"
+#define AZUL_T "\x1b[34m"
+#define MAGENTA_T "\x1b[35m"
+#define CYAN_T "\x1b[36m"
+#define BLANCO_T "\x1b[37m"

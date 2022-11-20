@@ -9,11 +9,12 @@
       5: nombre del pipe
     
     -Ejemplo para ejecucion
-      ./Gestor -n 12 -r ArchivoEntrada.txt -m A -t 5 -p pipeGestor
+      ./Gestor -n 10 -r ArchivoEntrada.txt -m A -t 20 -p pipeGestor
 */
 
 #include "Usuario.h"
 #include "solicitud.h"
+#include "colors.h"
 #include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
@@ -47,13 +48,13 @@ int iniciarUsuarios(Usuario *usuarios, char *nom_archivo);
 void printUsers();
 
 void signalHandler(){
-  printf("\n----------------------------\n");
+  printf(AMARILLO_T"\n----------------------------\n");
   printf("      Estadisticas     \n");
   printf("----------------------------\n");
   printf("Usuarios conectados: %d\n", conectados);
   printf("Tweets enviados: %d\n", tweets_enviados);
   printf("Tweets recidos: %d\n", tweets_recibidos);
-  printf("----------------------------\n\n");
+  printf("----------------------------\n\n"RESET_COLOR);
   signal(SIGALRM, signalHandler);
   alarm(tiempo);
 }
