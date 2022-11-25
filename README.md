@@ -8,6 +8,7 @@ Las funcionalidades se encuentran orientadas bajo el contexto de realizar la sim
 
 ## ¿Cómo correr los procesos Cliente y Gestor? 🚨
 . Gestor: ./Gestor -r ArchivoRelaciones -t tiempoEstadisticas -m (A/D)Modo -p nombrePipeGestor -n numeroClientesIniciales
+
 . Cliente: ./Cliente -i idCliente -p nombrePipeGestor
 
 ## Tecnologías empleadas ⚒
